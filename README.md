@@ -22,6 +22,9 @@ design decisions and the development process; code arrives issue by issue.
   organisation says so.
 - **Shared channels.** A channel can span several groups (and, later, several
   organisations) without loosening the boundary for everything else.
+- **One API for everyone.** The web app is an ordinary client of the
+  versioned public API, so a third-party integration or an incoming webhook
+  can do whatever the app can, with its own token and its own audit trail.
 - **One binary, one `compose.yaml`.** PostgreSQL plus the server. Download and
   run.
 

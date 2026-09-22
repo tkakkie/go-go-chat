@@ -42,6 +42,12 @@ is an open issue, not a reason to skip the rule.
   members visible to you.
 - **Never change a message's id when it moves between topics**, and never move
   a topic to a channel owned by a different organisation.
+- **Never point authorship, membership or audit at `user`.** They reference
+  `actor`; a user is one kind of actor, a bot is another.
+- **Never register an HTTP route outside the route table**, and every route
+  declares its authentication mode (`session`, `token`, `webhook`, `public`).
+  The front end calls only the versioned public API; there are no
+  front-end-only endpoints.
 - **Never `UPDATE` or `DELETE` an audit record.**
 - **Never write application SQL outside the designated database package**;
   migrations are the exception.
