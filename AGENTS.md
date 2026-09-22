@@ -61,9 +61,9 @@ mechanism yet is an open issue, not a reason to skip the rule.
 - **Never `UPDATE` or `DELETE` an audit record**, not even to fix a mistake.
   A correction is a new record that refers to the wrong one.
 - **Never log a message body, password hash, session token, API token,
-  webhook secret, invite or login link, email address or username.** Not in errors either.
-  The only identifier for a person or bot that may appear in a log is the
-  internal `actor_id`.
+  webhook secret, invite or login link, email address or username.** Not in
+  errors either. The only identifier for a person or bot that may appear in
+  a log is the internal `actor_id`.
 - **Never write application SQL outside the designated database package**;
   migrations are the exception.
 - **Never edit generated code by hand.** Code produced by `sqlc`,
@@ -135,8 +135,9 @@ cannot exercise the interleaving it exists to catch.
   or `a` holds `view_directory` — depends on joins and tenant scoping, and is
   tested against the real database for both clauses and their absence.
   Action policies take the **boolean result** of `canReach`, the
-  capabilities of the people involved and the organisation's settings, and
-  are pure functions unit tested without a database. A policy never
+  capabilities of the people involved, channel membership or admin status
+  where the action needs it, and the organisation's settings, and are pure
+  functions unit tested without a database. A policy never
   receives raw facts such as "shares a channel" or "has `view_directory`";
   that would let it re-implement reachability. A SQL or scoping mistake
   must not be able to hide behind a unit test.

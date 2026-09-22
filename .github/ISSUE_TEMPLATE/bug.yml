@@ -1,0 +1,30 @@
+name: Bug
+description: Something behaves differently from what an ADR, the glossary or an acceptance criterion says.
+labels: ["type:bug", "status:needs-approval"]
+body:
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: Cite the ADR, invariant or acceptance criterion if there is one.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk
+      options: ["low", "medium", "high"]
+    validations:
+      required: true

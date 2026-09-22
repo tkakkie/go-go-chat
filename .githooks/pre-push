@@ -1,0 +1,11 @@
+#!/bin/sh
+# Refuse direct pushes to main. Main changes only through merged pull requests.
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main)
+      echo "pre-push: refusing to push directly to main. Open a pull request." >&2
+      exit 1
+      ;;
+  esac
+done
+exit 0

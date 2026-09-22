@@ -1,0 +1,12 @@
+#!/bin/sh
+# Refuse commits on main and scan staged changes for secrets.
+branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+if [ "$branch" = "main" ]; then
+  echo "pre-commit: refusing to commit on main. Create a branch: git switch -c issue-<n>-<slug>" >&2
+  exit 1
+fi
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --pre-commit --staged --redact --no-banner || exit 1
+else
+  echo "pre-commit: gitleaks not installed; skipping secret scan (brew install gitleaks)" >&2
+fi

@@ -13,13 +13,13 @@ design decisions and the development process; code arrives issue by issue.
   conversation inside it. The default view of a channel is a single
   chronological feed of every topic, so replies never disappear into the past.
   You can pick or create a topic when you post, or post without one —
-  replying to such a message *creates* the topic. Anyone with the capability can move messages into a better topic
-  later.
+  replying to such a message *creates* the topic by default. Anyone with
+  the capability can move messages into a better topic later.
 - **Isolation without an org chart.** A store is a private channel. People
   who do not share a channel do not see each other, unless they hold the
-  capability to see the whole directory. Who may start a direct message, and who may create
-  channels, is organisation policy. No hierarchy to model, nothing to get
-  wrong.
+  capability to see the whole directory. Who may start a direct message,
+  and who may create channels, is organisation policy. No hierarchy to
+  model, nothing to get wrong.
 - **One API for everyone.** The web app is an ordinary client of the
   versioned public API. A third-party integration uses the same API, subject
   to what its actor is allowed to do and to its token's scope, with its own
