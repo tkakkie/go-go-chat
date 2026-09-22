@@ -1,0 +1,122 @@
+# AGENTS.md
+
+For AI coding tools and the people using them. Short on purpose: it points at
+where the rules are, and repeats only the few that are dangerous to miss.
+
+## Read before changing anything
+
+| | |
+|---|---|
+| [`docs/architecture/invariants.md`](docs/architecture/invariants.md) | Rules that must always hold, and how each is enforced |
+| [`docs/domain/glossary.md`](docs/domain/glossary.md) | What words mean. Use these identifiers |
+| [`docs/adr/`](docs/adr/) | Why things are the way they are. Do not re-decide a recorded decision inside a pull request; open an issue |
+| [`docs/process/workflow.md`](docs/process/workflow.md) | Who does what, and when to stop and ask |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Branches, sign-off, what a pull request needs |
+
+## Never
+
+These are repeated here deliberately. Each is cheap to state and expensive to
+get wrong. Every rule here is meant to be backed by a mechanism — a lint, a
+source test, a CI job, a database grant — listed in
+[`invariants.md`](docs/architecture/invariants.md). A rule without a mechanism
+is an open issue, not a reason to skip the rule.
+
+- **Never log a message body, password hash, session token, invite or login
+  link, email address or username.** Not in errors either. The only user
+  identifier that may appear in a log is the internal id.
+- **Never read or write organisation-owned data without scoping by
+  `organization_id`.** The one designed exception is a channel and everything
+  under it (topics, messages, attachments, reactions, read state): those are
+  reached *through the channel* and authorised by its scope, because a channel
+  may be shared across groups and, later, organisations. They still carry an
+  `owner_organization_id`, but that column is bookkeeping, never the access
+  decision.
+- **Never decide access by role name.** Ask for a capability.
+- **Never compute "can A message B" from raw reachability.** Reachability is a
+  primitive that returns *why* A can reach B. Every action (`canDM`,
+  `canInviteToChannel`, `canCreateGroupDM`, ...) is its own policy that
+  combines that reason with organisation settings. A group DM checks `canDM`
+  for every pair.
+- **Never let a capability other than the designated one create reachability.**
+  Being able to create channels or move messages in a group does not make its
+  members visible to you.
+- **Never change a message's id when it moves between topics**, and never move
+  a topic to a channel owned by a different organisation.
+- **Never `UPDATE` or `DELETE` an audit record.**
+- **Never write application SQL outside the designated database package**;
+  migrations are the exception.
+- **Never handle an expected failure with `panic`** — a bad request, a
+  database or network error, an external service being down, invalid input.
+  `panic` is for bugs (a branch that cannot be reached, a value that cannot
+  be nil) and for start-up preconditions (`regexp.MustCompile`,
+  `template.Must`, a missing required setting), where failing to start is
+  correct. A panic inside a request handler is recovered, logged with the
+  request id and answered with 500; it is a bug to fix, not a control flow.
+  Tests may assert that something panics. Never call `os.Exit` outside
+  `main`. Never ignore an error with `_` without a comment saying why.
+- **Never weaken a test or a lint to make it pass.** Deleting a test, loosening
+  an assertion, `t.Skip`, `//nolint`, a longer timeout, a golden file updated
+  without explanation, or a relaxed linter configuration all need a reason in
+  the pull request and an issue that approved it. A red check means the code
+  is wrong until shown otherwise.
+- **Never add a dependency without saying why** in the pull request — what
+  could not be done without it, and what was considered instead.
+- **Never copy code from other chat projects.** Learning from their design is
+  fine; pasting their code is not.
+
+## Before saying something works
+
+```bash
+make check
+```
+
+which runs `gofmt`, `go vet`, `golangci-lint`, `govulncheck` and `go test
+./...` (and the front-end equivalents once `frontend/` exists). If `make check`
+does not exist yet, run those directly.
+
+**A test for a behaviour change must fail against the code without the
+change.** Run it that way once and record the result in the pull request. For
+a brand-new capability where the old code does not even compile, say so
+instead of pretending a compile error is evidence.
+
+**A concurrency test must run genuinely concurrently.** Sequential execution
+cannot exercise the interleaving it exists to catch.
+
+## Tests
+
+- Anything that touches the database is tested against a **real PostgreSQL**
+  (testcontainers locally, a service container in CI). No mocks of the
+  database.
+- Fakes are for **external systems only**: email, push notifications, OIDC
+  providers, and similar. Whether object storage is a fake or a real MinIO
+  container is decided in the attachments issue.
+- Pure logic — reachability, action policies, validation — is unit tested
+  without a database and covers the success, failure and boundary cases named
+  in the issue's acceptance criteria.
+- Every HTTP route is registered in one table, and a table-driven sweep
+  checks each one for the unauthenticated, wrong-organisation and
+  wrong-group cases. A route that is not in the table does not exist.
+
+## Scope of a change
+
+- **Do what the issue asks, and no more.** Code outside it is not reformatted,
+  renamed or restructured in the same pull request. Something worth fixing
+  becomes its own issue.
+- **A behaviour change and a refactoring are separate pull requests.**
+- **No interface, generic parameter or layer with a single implementation**
+  for a need no issue has. A test double counts as an implementation. Share
+  code when two places change for the same reason, not because they look alike.
+- **Stop and ask** when the plan turns out to be wrong: a schema change the
+  plan did not mention, a new dependency, a security finding, a test that
+  cannot be written, or a third round of review fixes. The full list is in
+  [`docs/process/workflow.md`](docs/process/workflow.md).
+
+## Writing
+
+- Code, comments, documentation, commits, issues and pull requests are
+  **English**.
+- **Comments say why, not what.** A rejected alternative, a trap, the reason an
+  order matters, something deliberately not done.
+- Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/)
+  and carry a `Signed-off-by` line (`git commit -s`).
+- Work on a branch named `issue-<number>-<short-slug>`, never on `main`.
