@@ -1,0 +1,35 @@
+# Baseline. Tightened in the CI issue once there is code to lint.
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - errorlint
+    - forbidigo
+    - gocritic
+    - gosec
+    - nolintlint
+  settings:
+    forbidigo:
+      analyze-types: true
+      forbid:
+        - pattern: '^panic$'
+          msg: "panic is for bugs and start-up preconditions only (AGENTS.md); explain with //nolint:forbidigo // reason"
+        - pattern: '^os\.Exit$'
+          msg: "os.Exit only in main"
+        - pattern: '^fmt\.Print(f|ln)?$'
+          msg: "use log/slog"
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters: [forbidigo, gosec]
+      - path: ^cmd/.*/main\.go$
+        text: "os.Exit"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
