@@ -25,13 +25,21 @@ is an open issue, not a reason to skip the rule.
   invite or login link, email address or username.** Not in errors either.
   The only identifier for a person or bot that may appear in a log is the
   internal `actor_id`.
-- **Never read or write organisation-owned data without scoping by
-  `organization_id`.** The one designed exception is a channel and everything
-  under it (topics, messages, attachments, reactions, read state): those are
-  reached *through the channel* and authorised by its scope, because a channel
-  may be shared across groups and, later, organisations. They still carry an
-  `owner_organization_id`, but that column is bookkeeping, never the access
-  decision.
+- **Never let tenant-owned data cross the organisation boundary.** Every
+  SELECT, UPDATE and DELETE on an organisation-owned table is scoped by
+  `organization_id`; every INSERT stores the correct `organization_id`
+  explicitly. The one designed exception is a channel and everything under
+  it (topics, messages, attachments, reactions, read state): those are
+  reached *through the channel* and authorised by its scope and membership,
+  because a channel may be shared across groups and, later, organisations.
+  They still carry an `owner_organization_id`; a match on it is never the
+  reason access is granted. Using it for administrative work that is not
+  authorisation (export, listing, deletion, batch jobs) is fine with a
+  stated reason.
+- **Never grant a capability's effect outside its scope.** A capability is
+  held at a group and applies to that group's subtree; an invite capability
+  at the Osaka area says nothing about a channel under Tokyo.
+- **Never combine `public` with another authentication mode** on a route.
 - **Never decide access by role name.** Ask for a capability.
 - **Never compute "can A message B" from raw reachability.** Reachability is a
   primitive that returns the *set of reasons* (zero or more) why A can reach
