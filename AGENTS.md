@@ -111,6 +111,19 @@ cannot exercise the interleaving it exists to catch.
   checks each one for the unauthenticated, wrong-organisation and
   wrong-group cases. A route that is not in the table does not exist.
 
+## Front end (Svelte 5)
+
+- Runes only: `$state`, `$derived`, `$props`, `$effect`. Legacy syntax
+  (`export let`, `$:`, `on:click`, stores for component state) is a compile
+  error here by configuration. Do not fight it.
+- `$derived` for values computed from state; `$effect` only for side effects
+  that leave the component (a WebSocket subscription, focus, a timer).
+- No SvelteKit server code: no `+page.server.ts`, `+server.ts`, form actions
+  or `load` functions that talk to a database. The Go server is the only
+  back end; call it through the generated API client.
+- When unsure of Svelte 5 behaviour, consult the Svelte MCP server or the
+  Svelte documentation rather than memory. `svelte-check` must pass.
+
 ## Scope of a change
 
 - **Do what the issue asks, and no more.** Code outside it is not reformatted,

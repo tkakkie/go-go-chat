@@ -2,7 +2,7 @@
 
 A self-hostable team chat server for organisations with a hierarchy — head
 office, regions, stores — where who can talk to whom is a policy, not an
-accident. Written in Go, with a React front end embedded in a single binary.
+accident. Written in Go, with a Svelte front end embedded in a single binary.
 
 **Status: pre-alpha. Nothing runs yet.** The repository currently holds the
 design decisions and the development process; code arrives issue by issue.
