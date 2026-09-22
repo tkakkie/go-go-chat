@@ -59,6 +59,12 @@ is an open issue, not a reason to skip the rule.
   without explanation, or a relaxed linter configuration all need a reason in
   the pull request and an issue that approved it. A red check means the code
   is wrong until shown otherwise.
+- **Never edit generated code by hand.** Code produced by `sqlc`,
+  `oapi-codegen`, the TypeScript client generator or any other tool is
+  changed by editing its source (the SQL query file, the OpenAPI document,
+  the generator configuration) and regenerating. CI regenerates and fails on
+  any difference, so a hand edit cannot survive; it would also be silently
+  lost on the next regeneration.
 - **Never add a dependency without saying why** in the pull request — what
   could not be done without it, and what was considered instead.
 - **Never copy code from other chat projects.** Learning from their design is
