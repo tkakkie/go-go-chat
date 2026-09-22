@@ -21,9 +21,10 @@ source test, a CI job, a database grant — listed in
 [`invariants.md`](docs/architecture/invariants.md). A rule without a mechanism
 is an open issue, not a reason to skip the rule.
 
-- **Never log a message body, password hash, session token, invite or login
-  link, email address or username.** Not in errors either. The only user
-  identifier that may appear in a log is the internal id.
+- **Never log a message body, password hash, session token, API token,
+  invite or login link, email address or username.** Not in errors either.
+  The only identifier for a person or bot that may appear in a log is the
+  internal `actor_id`.
 - **Never read or write organisation-owned data without scoping by
   `organization_id`.** The one designed exception is a channel and everything
   under it (topics, messages, attachments, reactions, read state): those are
