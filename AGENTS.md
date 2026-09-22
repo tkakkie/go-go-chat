@@ -23,9 +23,9 @@ mechanism yet is an open issue, not a reason to skip the rule.
   SELECT, UPDATE and DELETE on an organisation-owned table is scoped by
   `organization_id`; every INSERT stores the correct `organization_id`
   explicitly. No exceptions: channels and everything under them included.
-  Channel content additionally requires membership of that channel; the one
-  deliberate exception is that a user may create *their own* membership in
-  a *public* channel of their organisation.
+  Channel content additionally requires membership of that channel.
+  Membership rows come only from invitation, public self-join, onboarding
+  of a new user, or bot installation.
 - **Never let an actor span organisations.** Every actor has exactly one
   `organization_id`, set at creation and never changed; the organisation an
   operation runs in is derived from the actor (`token → actor →
@@ -39,9 +39,11 @@ mechanism yet is an open issue, not a reason to skip the rule.
   other if they share a channel or the viewer holds `view_directory`; no
   other capability grants visibility. There is no organisation hierarchy;
   do not invent one.
-- **Never let reachability alone permit a direct message.** DMs have their
-  own policies (still being settled in ADR 0005) that combine reachability
-  with both people's capabilities and organisation settings.
+- **Never let reachability alone permit a direct message**, and never let a
+  DM exception create reachability. DMs have their own policies (still
+  being settled in ADR 0005) that combine `canReach` with both people's
+  capabilities and organisation settings; a per-user exception only relaxes
+  the rule for a pair that is already reachable.
 - **Never grant channel rights outside the channel.** Channel-level rights
   are one flag on the membership, `is_admin`, and mean nothing for any other
   channel.

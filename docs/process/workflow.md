@@ -113,9 +113,11 @@ Reviews stay light because CI is strict:
   what must not break together with the test that proves it; diff coverage
   is posted as a comment so a reviewer can ask why a changed line has no
   test.
-- Reviewers therefore look at three things: does it meet the acceptance
+- Reviewers therefore focus on three things: does it meet the acceptance
   criteria, does it respect [`invariants.md`](../architecture/invariants.md),
-  and does it change anything outside the issue.
+  and does it change anything outside the issue. A concrete correctness or
+  security problem noticed along the way is still reported; the focus
+  limits scope creep, not honesty.
 
 ## Evidence over speculation
 
