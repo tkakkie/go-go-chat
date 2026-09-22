@@ -56,6 +56,11 @@ is an open issue, not a reason to skip the rule.
   `actor`; a user is one kind of actor, a bot is another. A bot is never a
   group member: it is installed into channels, and reachability never
   applies to it.
+- **Never let an actor span organisations.** Every actor has exactly one
+  `organization_id`, set at creation and never changed; the organisation an
+  operation runs in is derived from the actor (`token → actor →
+  organization`), never taken from the request. Acting in another
+  organisation means a different actor.
 - **Never register an HTTP route outside the route table**, and every route
   declares its allowed authentication modes (one or more of `session`,
   `token`, `webhook`, `public`).
