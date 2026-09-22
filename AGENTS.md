@@ -59,7 +59,7 @@ mechanism yet is an open issue, not a reason to skip the rule.
 - **Never `UPDATE` or `DELETE` an audit record**, not even to fix a mistake.
   A correction is a new record that refers to the wrong one.
 - **Never log a message body, password hash, session token, API token,
-  invite or login link, email address or username.** Not in errors either.
+  webhook secret, invite or login link, email address or username.** Not in errors either.
   The only identifier for a person or bot that may appear in a log is the
   internal `actor_id`.
 - **Never write application SQL outside the designated database package**;
