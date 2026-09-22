@@ -34,10 +34,10 @@ is an open issue, not a reason to skip the rule.
   decision.
 - **Never decide access by role name.** Ask for a capability.
 - **Never compute "can A message B" from raw reachability.** Reachability is a
-  primitive that returns *why* A can reach B. Every action (`canDM`,
-  `canInviteToChannel`, `canCreateGroupDM`, ...) is its own policy that
-  combines that reason with organisation settings. A group DM checks `canDM`
-  for every pair.
+  primitive that returns the *set of reasons* (zero or more) why A can reach
+  B. Every action (`canDM`, `canInviteToChannel`, `canCreateGroupDM`, ...) is
+  its own policy that decides from that set and organisation settings. A
+  group DM checks `canDM` for every pair.
 - **Never let a capability other than the designated one create reachability.**
   Being able to create channels or move messages in a group does not make its
   members visible to you.
@@ -51,7 +51,8 @@ is an open issue, not a reason to skip the rule.
   declares its authentication mode (`session`, `token`, `webhook`, `public`).
   The front end calls only the versioned public API; there are no
   front-end-only endpoints.
-- **Never `UPDATE` or `DELETE` an audit record.**
+- **Never `UPDATE` or `DELETE` an audit record**, not even to fix a mistake.
+  A correction is a new record that refers to the wrong one.
 - **Never write application SQL outside the designated database package**;
   migrations are the exception.
 - **Never handle an expected failure with `panic`** — a bad request, a
