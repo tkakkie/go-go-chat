@@ -111,7 +111,17 @@ cannot exercise the interleaving it exists to catch.
   checks each one for the unauthenticated, wrong-organisation and
   wrong-group cases. A route that is not in the table does not exist.
 
-## Front end (Svelte 5)
+## Front end
+
+Each concern has one tool. Use the one for the layer you are in.
+
+| Layer | Use | Not |
+|---|---|---|
+| Structure | Semantic HTML and browser-standard elements first: `<dialog>`, `<details>`, `<form>` with native validation, `<select>`, `<button>` | `<div>` with click handlers |
+| Appearance | Tailwind, using only names from the theme (colours, spacing, type). Arbitrary values (`w-[13px]`, `text-[#123456]`) need a reason in the pull request | hand-written CSS, inline styles |
+| State and interaction | The least Svelte 5 / TypeScript that does it. Logic lives in `.ts` modules with Vitest tests; `.svelte` files render and forward input | logic inside components |
+| Complex accessible widgets (menu, combobox, dialog with focus trap) | shadcn-svelte components (copied into the repository, ours to edit) over Bits UI | a hand-rolled widget |
+| Business rules, authorisation, data decisions | Go. **The UI hides; the server denies.** The front end may hide a control the API says the actor cannot use, and may validate for the user's convenience, but it never decides | any check on the client that the server does not also make |
 
 - Runes only: `$state`, `$derived`, `$props`, `$effect`. Legacy syntax
   (`export let`, `$:`, `on:click`, stores for component state) is a compile
@@ -121,6 +131,10 @@ cannot exercise the interleaving it exists to catch.
 - No SvelteKit server code: no `+page.server.ts`, `+server.ts`, form actions
   or `load` functions that talk to a database. The Go server is the only
   back end; call it through the generated API client.
+- Adding an npm dependency follows the same rule as Go: say in the pull
+  request what could not be done without it and what was considered.
+  Prefer the platform, then something already in the tree, then a new
+  dependency.
 - When unsure of Svelte 5 behaviour, consult the Svelte MCP server or the
   Svelte documentation rather than memory. `svelte-check` must pass.
 
