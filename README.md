@@ -22,8 +22,8 @@ design decisions and the development process; code arrives issue by issue.
   wrong.
 - **One API for everyone.** The web app is an ordinary client of the
   versioned public API. A third-party integration uses the same API, subject
-  to its actor's capabilities and its token's scope, with its own audit
-  trail. Incoming webhooks post through a bot with a per-webhook secret.
+  to what its actor is allowed to do and to its token's scope, with its own
+  audit trail. Incoming webhooks post through a bot with a per-webhook secret.
 - **One binary, one `compose.yaml`.** PostgreSQL plus the server. Download and
   run.
 

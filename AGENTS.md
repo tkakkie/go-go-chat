@@ -33,7 +33,8 @@ mechanism yet is an open issue, not a reason to skip the rule.
 - **Never decide access by role name.** Ask for a capability — or for
   `channel_member.is_admin` where that action explicitly permits a channel
   admin. `is_admin` is not a capability and there is no other channel-local
-  grant.
+  grant. Bots hold neither roles nor capabilities; their allowed actions
+  are a fixed, narrow set (ADR 0012).
 - **Never compute visibility anywhere but in `canReach`.** Two users see each
   other if they share a channel or the viewer holds `view_directory`; no
   other capability grants visibility. There is no organisation hierarchy;
