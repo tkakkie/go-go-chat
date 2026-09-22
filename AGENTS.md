@@ -23,12 +23,17 @@ mechanism yet is an open issue, not a reason to skip the rule.
   SELECT, UPDATE and DELETE on an organisation-owned table is scoped by
   `organization_id`; every INSERT stores the correct `organization_id`
   explicitly. No exceptions: channels and everything under them included.
-  Channel content additionally requires membership of that channel.
+  Channel content additionally requires membership of that channel; the one
+  deliberate exception is that a user may create *their own* membership in
+  a *public* channel of their organisation.
 - **Never let an actor span organisations.** Every actor has exactly one
   `organization_id`, set at creation and never changed; the organisation an
   operation runs in is derived from the actor (`token → actor →
   organization`), never taken from the request.
-- **Never decide access by role name.** Ask for a capability.
+- **Never decide access by role name.** Ask for a capability — or for
+  `channel_member.is_admin` where that action explicitly permits a channel
+  admin. `is_admin` is not a capability and there is no other channel-local
+  grant.
 - **Never compute visibility anywhere but in `canReach`.** Two users see each
   other if they share a channel or the viewer holds `view_directory`; no
   other capability grants visibility. There is no organisation hierarchy;
@@ -123,13 +128,15 @@ cannot exercise the interleaving it exists to catch.
 - Fakes are for **external systems only**: email, push notifications, OIDC
   providers, and similar. Whether object storage is a fake or a real MinIO
   container is decided in the attachments issue.
-- Reachability is tested in two layers. **Finding the facts** — does this
-  user hold `view_directory`, do these two users share a channel — depends
-  on joins and tenant scoping, and is tested against the real database.
-  **Deciding** — given those facts, the capabilities involved and the
-  organisation's policy, does an action policy hold — is pure and is unit
-  tested without a database. A SQL or scoping mistake must not be able to
-  hide behind a unit test.
+- Reachability is tested in two layers. `canReach(a, b)` — share a channel,
+  or `a` holds `view_directory` — depends on joins and tenant scoping, and is
+  tested against the real database for both clauses and their absence.
+  Action policies take the **boolean result** of `canReach`, the
+  capabilities of the people involved and the organisation's settings, and
+  are pure functions unit tested without a database. A policy never
+  receives raw facts such as "shares a channel" or "has `view_directory`";
+  that would let it re-implement reachability. A SQL or scoping mistake
+  must not be able to hide behind a unit test.
 - Other pure logic (validation, formatting, policies) is unit tested and
   covers the success, failure and boundary cases named in the issue's
   acceptance criteria.

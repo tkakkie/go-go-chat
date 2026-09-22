@@ -21,9 +21,9 @@ design decisions and the development process; code arrives issue by issue.
   channels, is organisation policy. No hierarchy to model, nothing to get
   wrong.
 - **One API for everyone.** The web app is an ordinary client of the
-  versioned public API, so a third-party integration with its own API token
-  can do whatever the app can, with its own audit trail. Incoming webhooks
-  post through a bot with a per-webhook secret.
+  versioned public API. A third-party integration uses the same API, subject
+  to its actor's capabilities and its token's scope, with its own audit
+  trail. Incoming webhooks post through a bot with a per-webhook secret.
 - **One binary, one `compose.yaml`.** PostgreSQL plus the server. Download and
   run.
 
