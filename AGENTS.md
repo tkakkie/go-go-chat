@@ -13,64 +13,56 @@ where the rules are, and repeats only the few that are dangerous to miss.
 | [`docs/process/workflow.md`](docs/process/workflow.md) | Who does what, and when to stop and ask |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Branches, sign-off, what a pull request needs |
 
-## Never
+## Never — rules a mechanism enforces
 
-These are repeated here deliberately. Each is cheap to state and expensive to
-get wrong. Every rule here is meant to be backed by a mechanism — a lint, a
-source test, a CI job, a database grant — listed in
-[`invariants.md`](docs/architecture/invariants.md). A rule without a mechanism
-is an open issue, not a reason to skip the rule.
+Each of these corresponds to an invariant and is (or will be) backed by a
+lint, a source test, a CI job or a database grant. A rule here without a
+mechanism yet is an open issue, not a reason to skip the rule.
 
+- **Never let tenant-owned data cross the organisation boundary.** Every
+  SELECT, UPDATE and DELETE on an organisation-owned table is scoped by
+  `organization_id`; every INSERT stores the correct `organization_id`
+  explicitly. No exceptions: channels and everything under them included.
+  Channel content additionally requires membership of that channel.
+- **Never let an actor span organisations.** Every actor has exactly one
+  `organization_id`, set at creation and never changed; the organisation an
+  operation runs in is derived from the actor (`token → actor →
+  organization`), never taken from the request.
+- **Never decide access by role name.** Ask for a capability.
+- **Never compute visibility anywhere but in `canReach`.** Two users see each
+  other if they share a channel or the viewer holds `view_directory`; no
+  other capability grants visibility. There is no organisation hierarchy;
+  do not invent one.
+- **Never let reachability alone permit a direct message.** DMs have their
+  own policies (still being settled in ADR 0005) that combine reachability
+  with both people's capabilities and organisation settings.
+- **Never grant channel rights outside the channel.** Channel-level rights
+  are one flag on the membership, `is_admin`, and mean nothing for any other
+  channel.
+- **Never point authorship, channel membership or audit at `user`.** They
+  reference `actor`; a user is one kind of actor, a bot is another. A bot
+  has no directory visibility, is outside reachability, and enters a channel
+  only through `canInstallBot`.
+- **Never register an HTTP route outside the route table**, and every route
+  declares its allowed authentication modes (one or more of `session`,
+  `token`, `webhook`; or `public` alone, never combined). The front end
+  calls only the versioned public API; there are no front-end-only
+  endpoints.
+- **Never change a message's id when it moves between topics**, and never
+  move a topic to a channel of a different organisation.
+- **Never `UPDATE` or `DELETE` an audit record**, not even to fix a mistake.
+  A correction is a new record that refers to the wrong one.
 - **Never log a message body, password hash, session token, API token,
   invite or login link, email address or username.** Not in errors either.
   The only identifier for a person or bot that may appear in a log is the
   internal `actor_id`.
-- **Never let tenant-owned data cross the organisation boundary.** Every
-  SELECT, UPDATE and DELETE on an organisation-owned table is scoped by
-  `organization_id`; every INSERT stores the correct `organization_id`
-  explicitly. The one designed exception is a channel and everything under
-  it (topics, messages, attachments, reactions, read state): those are
-  reached *through the channel* and authorised by its scope and membership,
-  because a channel may, later, be shared with another organisation.
-  They still carry an `owner_organization_id`; a match on it is never the
-  reason access is granted. Using it for administrative work that is not
-  authorisation (export, listing, deletion, batch jobs) is fine with a
-  stated reason.
-- **Never grant a capability's effect outside its scope.** Capabilities are
-  organisation-wide, or channel-level through a channel membership; being
-  admin of one channel says nothing about another.
-- **Never combine `public` with another authentication mode** on a route.
-- **Never decide access by role name.** Ask for a capability.
-- **Never compute "can A message B" from raw reachability.** Reachability is a
-  primitive between users that returns the *set of reasons* (zero or more)
-  why A can reach B: `organization_directory`, `shared_channel`. Every
-  action (`canDM`, `canInviteToChannel`, `canCreateGroupDM`, ...) is its own
-  policy that decides from that set and organisation settings. Group DMs
-  have their own policy too; the DM rules are still being settled in ADR
-  0005, so do not assume a symmetric `canDM`.
-- **Never let a capability other than `view_directory` create reachability.**
-  Being able to create channels or move messages does not make anyone
-  visible to you. There is no organisation hierarchy; do not invent one.
-- **Never change a message's id when it moves between topics**, and never move
-  a topic to a channel owned by a different organisation.
-- **Never point authorship, membership or audit at `user`.** They reference
-  `actor`; a user is one kind of actor, a bot is another. A bot has no
-  directory visibility: it is installed into channels, and reachability
-  never applies to it.
-- **Never let an actor span organisations.** Every actor has exactly one
-  `organization_id`, set at creation and never changed; the organisation an
-  operation runs in is derived from the actor (`token → actor →
-  organization`), never taken from the request. Acting in another
-  organisation means a different actor.
-- **Never register an HTTP route outside the route table**, and every route
-  declares its allowed authentication modes (one or more of `session`,
-  `token`, `webhook`, `public`).
-  The front end calls only the versioned public API; there are no
-  front-end-only endpoints.
-- **Never `UPDATE` or `DELETE` an audit record**, not even to fix a mistake.
-  A correction is a new record that refers to the wrong one.
 - **Never write application SQL outside the designated database package**;
   migrations are the exception.
+- **Never edit generated code by hand.** Code produced by `sqlc`,
+  `oapi-codegen`, the TypeScript client generator or any other tool is
+  changed by editing its source (the SQL query file, the OpenAPI document,
+  the generator configuration) and regenerating. CI regenerates and fails on
+  any difference.
 - **Never handle an expected failure with `panic`** — a bad request, a
   database or network error, an external service being down, invalid input.
   `panic` is for bugs (a branch that cannot be reached, a value that cannot
@@ -85,16 +77,25 @@ is an open issue, not a reason to skip the rule.
   without explanation, or a relaxed linter configuration all need a reason in
   the pull request and an issue that approved it. A red check means the code
   is wrong until shown otherwise.
-- **Never edit generated code by hand.** Code produced by `sqlc`,
-  `oapi-codegen`, the TypeScript client generator or any other tool is
-  changed by editing its source (the SQL query file, the OpenAPI document,
-  the generator configuration) and regenerating. CI regenerates and fails on
-  any difference, so a hand edit cannot survive; it would also be silently
-  lost on the next regeneration.
+
+## Working rules — kept by review and the workflow
+
 - **Never add a dependency without saying why** in the pull request — what
-  could not be done without it, and what was considered instead.
+  could not be done without it, and what was considered instead. This
+  applies to Go modules and npm packages alike.
 - **Never copy code from other chat projects.** Learning from their design is
   fine; pasting their code is not.
+- **Do what the issue asks, and no more.** Code outside it is not reformatted,
+  renamed or restructured in the same pull request. Something worth fixing
+  becomes its own issue.
+- **A behaviour change and a refactoring are separate pull requests.**
+- **No interface, generic parameter or layer with a single implementation**
+  for a need no issue has. A test double counts as an implementation. Share
+  code when two places change for the same reason, not because they look alike.
+- **Stop and ask** when the plan turns out to be wrong: a schema change the
+  plan did not mention, a new dependency, a security finding, a test that
+  cannot be written, or a third round of review fixes. The full list is in
+  [`docs/process/workflow.md`](docs/process/workflow.md).
 
 ## Before saying something works
 
@@ -124,20 +125,22 @@ cannot exercise the interleaving it exists to catch.
   container is decided in the attachments issue.
 - Reachability is tested in two layers. **Finding the facts** — does this
   user hold `view_directory`, do these two users share a channel — depends
-  on joins and tenant scoping, and is tested against the real database. **Deciding** — given a
-  reachability reason and the organisation's policy, does `canDM` (or any
-  other action policy) hold — is pure and is unit tested without a database.
-  A SQL or scoping mistake must not be able to hide behind a unit test.
+  on joins and tenant scoping, and is tested against the real database.
+  **Deciding** — given those facts, the capabilities involved and the
+  organisation's policy, does an action policy hold — is pure and is unit
+  tested without a database. A SQL or scoping mistake must not be able to
+  hide behind a unit test.
 - Other pure logic (validation, formatting, policies) is unit tested and
   covers the success, failure and boundary cases named in the issue's
   acceptance criteria.
-- Every HTTP route is registered in one table with its authentication mode
-  and scope, and a table-driven sweep applies the negative cases **that mode
-  and scope call for**: a `session` route is called unauthenticated, from
-  the wrong organisation, and — if it is channel-scoped — as a non-member; a `token` route with a missing, invalid and insufficiently scoped
-  token; a `webhook` route with a missing and an invalid webhook credential;
-  a `public` route gets no authentication-rejection case. A route that is
-  not in the table does not exist.
+- Every HTTP route is registered in one table with its authentication modes
+  and scope, and a table-driven sweep applies the negative cases **those
+  call for**: a `session` route is called unauthenticated, from the wrong
+  organisation, and — if it is channel-scoped — as a non-member; a `token`
+  route with a missing, invalid and insufficiently scoped token; a `webhook`
+  route with a missing and an invalid webhook credential; a `public` route
+  gets no authentication-rejection case. A route that is not in the table
+  does not exist.
 
 ## Front end
 
@@ -160,27 +163,9 @@ Each concern has one tool. Use the one for the layer you are in.
 - No SvelteKit server code: no `+page.server.ts`, `+server.ts`, form actions
   or `load` functions that talk to a database. The Go server is the only
   back end; call it through the generated API client.
-- Adding an npm dependency follows the same rule as Go: say in the pull
-  request what could not be done without it and what was considered.
-  Prefer the platform, then something already in the tree, then a new
-  dependency.
 - When unsure of Svelte 5 behaviour, consult the Svelte MCP server when
   available, otherwise the official Svelte documentation. Do not rely on
   memory. `svelte-check` must pass.
-
-## Scope of a change
-
-- **Do what the issue asks, and no more.** Code outside it is not reformatted,
-  renamed or restructured in the same pull request. Something worth fixing
-  becomes its own issue.
-- **A behaviour change and a refactoring are separate pull requests.**
-- **No interface, generic parameter or layer with a single implementation**
-  for a need no issue has. A test double counts as an implementation. Share
-  code when two places change for the same reason, not because they look alike.
-- **Stop and ask** when the plan turns out to be wrong: a schema change the
-  plan did not mention, a new dependency, a security finding, a test that
-  cannot be written, or a third round of review fixes. The full list is in
-  [`docs/process/workflow.md`](docs/process/workflow.md).
 
 ## Writing
 
