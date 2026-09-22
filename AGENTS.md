@@ -104,12 +104,24 @@ cannot exercise the interleaving it exists to catch.
 - Fakes are for **external systems only**: email, push notifications, OIDC
   providers, and similar. Whether object storage is a fake or a real MinIO
   container is decided in the attachments issue.
-- Pure logic — reachability, action policies, validation — is unit tested
-  without a database and covers the success, failure and boundary cases named
-  in the issue's acceptance criteria.
-- Every HTTP route is registered in one table, and a table-driven sweep
-  checks each one for the unauthenticated, wrong-organisation and
-  wrong-group cases. A route that is not in the table does not exist.
+- Reachability is tested in two layers. **Finding the facts** — do these
+  actors share a group, is this actor under a group the other manages, do
+  they share a channel — depends on the closure table, joins and tenant
+  scoping, and is tested against the real database. **Deciding** — given a
+  reachability reason and the organisation's policy, does `canDM` (or any
+  other action policy) hold — is pure and is unit tested without a database.
+  A SQL or scoping mistake must not be able to hide behind a unit test.
+- Other pure logic (validation, formatting, policies) is unit tested and
+  covers the success, failure and boundary cases named in the issue's
+  acceptance criteria.
+- Every HTTP route is registered in one table with its authentication mode
+  and scope, and a table-driven sweep applies the negative cases **that mode
+  and scope call for**: a `session` route is called unauthenticated, from
+  the wrong organisation, and — if it is group-scoped — from the wrong
+  group; a `token` route with a missing, invalid and insufficiently scoped
+  token; a `webhook` route with a missing and an invalid webhook credential;
+  a `public` route gets no authentication-rejection case. A route that is
+  not in the table does not exist.
 
 ## Front end
 
@@ -118,14 +130,15 @@ Each concern has one tool. Use the one for the layer you are in.
 | Layer | Use | Not |
 |---|---|---|
 | Structure | Semantic HTML and browser-standard elements first: `<dialog>`, `<details>`, `<form>` with native validation, `<select>`, `<button>` | `<div>` with click handlers |
-| Appearance | Tailwind, using only names from the theme (colours, spacing, type). Arbitrary values (`w-[13px]`, `text-[#123456]`) need a reason in the pull request | hand-written CSS, inline styles |
-| State and interaction | The least Svelte 5 / TypeScript that does it. Logic lives in `.ts` modules with Vitest tests; `.svelte` files render and forward input | logic inside components |
+| Appearance | Tailwind with the shared theme (colours, spacing, type). Components normally use Tailwind rather than inventing their own CSS. Arbitrary values (`w-[13px]`, `text-[#123456]`) need a reason in the pull request, as does hand-written CSS outside the narrow exceptions: the central theme and global styles, CSS custom properties, and integrations where Tailwind does not fit | a private CSS system per component, inline styles |
+| State and interaction | The least Svelte 5 / TypeScript that does it. Component-local UI state (a menu open or closed, the selected tab, an input draft, focus) lives in the `.svelte` file. Reusable or non-trivial front-end-only logic lives in `.ts` modules with Vitest tests | product decisions in the front end |
 | Complex accessible widgets (menu, combobox, dialog with focus trap) | shadcn-svelte components (copied into the repository, ours to edit) over Bits UI | a hand-rolled widget |
 | Business rules, authorisation, data decisions | Go. **The UI hides; the server denies.** The front end may hide a control the API says the actor cannot use, and may validate for the user's convenience, but it never decides | any check on the client that the server does not also make |
 
-- Runes only: `$state`, `$derived`, `$props`, `$effect`. Legacy syntax
-  (`export let`, `$:`, `on:click`, stores for component state) is a compile
-  error here by configuration. Do not fight it.
+- Runes only: `$state`, `$derived`, `$props`, `$effect`. Legacy component
+  syntax (`export let`, `$:`, `on:click`, stores for component state) is
+  forbidden in this repository: `compilerOptions.runes = true` makes the
+  compiler reject it, and CI must reject it. Do not work around it.
 - `$derived` for values computed from state; `$effect` only for side effects
   that leave the component (a WebSocket subscription, focus, a timer).
 - No SvelteKit server code: no `+page.server.ts`, `+server.ts`, form actions
@@ -135,8 +148,9 @@ Each concern has one tool. Use the one for the layer you are in.
   request what could not be done without it and what was considered.
   Prefer the platform, then something already in the tree, then a new
   dependency.
-- When unsure of Svelte 5 behaviour, consult the Svelte MCP server or the
-  Svelte documentation rather than memory. `svelte-check` must pass.
+- When unsure of Svelte 5 behaviour, consult the Svelte MCP server when
+  available, otherwise the official Svelte documentation. Do not rely on
+  memory. `svelte-check` must pass.
 
 ## Scope of a change
 
