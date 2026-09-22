@@ -107,6 +107,12 @@ Reviews stay light because CI is strict:
   `/ship` routine runs the new tests against the base commit and pastes the
   result into the pull request. For a new capability whose tests cannot
   compile against the base, the pull request says so instead.
+- **Coverage is information, not a gate.** A percentage invites tests that
+  raise the number without protecting anything. The pull request instead
+  states which behaviour changed, which boundary conditions matter, and
+  what must not break together with the test that proves it; diff coverage
+  is posted as a comment so a reviewer can ask why a changed line has no
+  test.
 - Reviewers therefore look at three things: does it meet the acceptance
   criteria, does it respect [`invariants.md`](../architecture/invariants.md),
   and does it change anything outside the issue.
