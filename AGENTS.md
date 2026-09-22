@@ -36,8 +36,9 @@ is an open issue, not a reason to skip the rule.
 - **Never compute "can A message B" from raw reachability.** Reachability is a
   primitive that returns the *set of reasons* (zero or more) why A can reach
   B. Every action (`canDM`, `canInviteToChannel`, `canCreateGroupDM`, ...) is
-  its own policy that decides from that set and organisation settings. A
-  group DM checks `canDM` for every pair.
+  its own policy that decides from that set and organisation settings.
+  Group DMs have their own policy too; the DM rules are still being settled
+  in ADR 0005, so do not assume a symmetric `canDM`.
 - **Never let a capability other than the designated one create reachability.**
   Being able to create channels or move messages in a group does not make its
   members visible to you.
@@ -48,7 +49,8 @@ is an open issue, not a reason to skip the rule.
   group member: it is installed into channels, and reachability never
   applies to it.
 - **Never register an HTTP route outside the route table**, and every route
-  declares its authentication mode (`session`, `token`, `webhook`, `public`).
+  declares its allowed authentication modes (one or more of `session`,
+  `token`, `webhook`, `public`).
   The front end calls only the versioned public API; there are no
   front-end-only endpoints.
 - **Never `UPDATE` or `DELETE` an audit record**, not even to fix a mistake.
