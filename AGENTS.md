@@ -31,31 +31,32 @@ is an open issue, not a reason to skip the rule.
   explicitly. The one designed exception is a channel and everything under
   it (topics, messages, attachments, reactions, read state): those are
   reached *through the channel* and authorised by its scope and membership,
-  because a channel may be shared across groups and, later, organisations.
+  because a channel may, later, be shared with another organisation.
   They still carry an `owner_organization_id`; a match on it is never the
   reason access is granted. Using it for administrative work that is not
   authorisation (export, listing, deletion, batch jobs) is fine with a
   stated reason.
-- **Never grant a capability's effect outside its scope.** A capability is
-  held at a group and applies to that group's subtree; an invite capability
-  at the Osaka area says nothing about a channel under Tokyo.
+- **Never grant a capability's effect outside its scope.** Capabilities are
+  organisation-wide, or channel-level through a channel membership; being
+  admin of one channel says nothing about another.
 - **Never combine `public` with another authentication mode** on a route.
 - **Never decide access by role name.** Ask for a capability.
 - **Never compute "can A message B" from raw reachability.** Reachability is a
-  primitive that returns the *set of reasons* (zero or more) why A can reach
-  B. Every action (`canDM`, `canInviteToChannel`, `canCreateGroupDM`, ...) is
-  its own policy that decides from that set and organisation settings.
-  Group DMs have their own policy too; the DM rules are still being settled
-  in ADR 0005, so do not assume a symmetric `canDM`.
-- **Never let a capability other than the designated one create reachability.**
-  Being able to create channels or move messages in a group does not make its
-  members visible to you.
+  primitive between users that returns the *set of reasons* (zero or more)
+  why A can reach B: `organization_directory`, `shared_channel`. Every
+  action (`canDM`, `canInviteToChannel`, `canCreateGroupDM`, ...) is its own
+  policy that decides from that set and organisation settings. Group DMs
+  have their own policy too; the DM rules are still being settled in ADR
+  0005, so do not assume a symmetric `canDM`.
+- **Never let a capability other than `view_directory` create reachability.**
+  Being able to create channels or move messages does not make anyone
+  visible to you. There is no organisation hierarchy; do not invent one.
 - **Never change a message's id when it moves between topics**, and never move
   a topic to a channel owned by a different organisation.
 - **Never point authorship, membership or audit at `user`.** They reference
-  `actor`; a user is one kind of actor, a bot is another. A bot is never a
-  group member: it is installed into channels, and reachability never
-  applies to it.
+  `actor`; a user is one kind of actor, a bot is another. A bot has no
+  directory visibility: it is installed into channels, and reachability
+  never applies to it.
 - **Never let an actor span organisations.** Every actor has exactly one
   `organization_id`, set at creation and never changed; the organisation an
   operation runs in is derived from the actor (`token → actor →
@@ -121,10 +122,9 @@ cannot exercise the interleaving it exists to catch.
 - Fakes are for **external systems only**: email, push notifications, OIDC
   providers, and similar. Whether object storage is a fake or a real MinIO
   container is decided in the attachments issue.
-- Reachability is tested in two layers. **Finding the facts** — do these
-  actors share a group, is this actor under a group the other manages, do
-  they share a channel — depends on the closure table, joins and tenant
-  scoping, and is tested against the real database. **Deciding** — given a
+- Reachability is tested in two layers. **Finding the facts** — does this
+  user hold `view_directory`, do these two users share a channel — depends
+  on joins and tenant scoping, and is tested against the real database. **Deciding** — given a
   reachability reason and the organisation's policy, does `canDM` (or any
   other action policy) hold — is pure and is unit tested without a database.
   A SQL or scoping mistake must not be able to hide behind a unit test.
@@ -134,8 +134,7 @@ cannot exercise the interleaving it exists to catch.
 - Every HTTP route is registered in one table with its authentication mode
   and scope, and a table-driven sweep applies the negative cases **that mode
   and scope call for**: a `session` route is called unauthenticated, from
-  the wrong organisation, and — if it is group-scoped — from the wrong
-  group; a `token` route with a missing, invalid and insufficiently scoped
+  the wrong organisation, and — if it is channel-scoped — as a non-member; a `token` route with a missing, invalid and insufficiently scoped
   token; a `webhook` route with a missing and an invalid webhook credential;
   a `public` route gets no authentication-rejection case. A route that is
   not in the table does not exist.

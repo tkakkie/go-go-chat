@@ -15,13 +15,13 @@ design decisions and the development process; code arrives issue by issue.
   Posting without a topic is fine — replying to such a message *creates* the
   topic. Anyone with the capability can move messages into a better topic
   later.
-- **A group tree per organisation.** Organisation › area › store, or any shape
-  up to a fixed maximum depth (three levels in v1). Channels belong to a group. Who can see and
-  message whom is derived from the tree and from organisation policy, so a
-  part-timer in one store never sees the staff of another unless the
-  organisation says so.
-- **Shared channels.** A channel can span several groups (and, later, several
-  organisations) without loosening the boundary for everything else.
+- **Isolation without an org chart.** A store is a channel. People who do
+  not share a channel do not see each other, unless their role lets them see
+  the whole directory. Who may start a direct message, and who may create
+  channels, is organisation policy. No hierarchy to model, nothing to get
+  wrong.
+- **Shared channels, later.** A channel will be able to admit guests from
+  another organisation without loosening the boundary for everything else.
 - **One API for everyone.** The web app is an ordinary client of the
   versioned public API, so a third-party integration or an incoming webhook
   can do whatever the app can, with its own token and its own audit trail.
